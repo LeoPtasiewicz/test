@@ -1,8 +1,8 @@
 import subprocess
 import sys
-import os
 
 def run_git_command(command):
+    print(f"Running command: {command}")
     result = subprocess.run(command, shell=True, capture_output=True, text=True)
     if result.returncode != 0:
         print(f"Error running command: {command}")
@@ -19,6 +19,12 @@ def main():
 
     # Stage changes
     run_git_command("git add .")
+
+    # Check if there are changes to commit
+    status_result = subprocess.run("git status --porcelain", shell=True, capture_output=True, text=True)
+    if not status_result.stdout.strip():
+        print("Nothing to commit, working tree clean")
+        sys.exit(0)
 
     # Commit changes
     run_git_command(f'git commit -m "{commit_message}"')
