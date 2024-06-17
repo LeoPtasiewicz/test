@@ -8,8 +8,8 @@ from selenium.common.exceptions import NoSuchElementException, TimeoutException,
 import time
 
 # Define the directory containing the export files and the reference file
-export_dir = 'D:/Add to card automatically/Automation_Order_Cards/Exports'
-reference_file = 'D:/Add to card automatically/Automation_Order_Cards/reference_file.xlsx'
+export_dir = 'D:/Add to card automatically/test/Automation_Order_Cards/Exports'
+reference_file = 'D:/Add to card automatically/test/Automation_Order_Cards/reference_file.xlsx'
 output_file = 'combined_order_details.xlsx'
 aggregated_output_file = 'aggregated_order_details.xlsx'
 
@@ -256,8 +256,12 @@ except Exception as e:
     print(f"An error occurred: {e}")
 
 finally:
-    # Do not quit the driver to keep the browser open
-    pass
+    # Attempt to quit the driver properly
+    try:
+        driver.quit()
+        print("Chrome WebDriver has been quit successfully.")
+    except Exception as e:
+        print(f"An error occurred while quitting the driver: {e}")
 
 # Print cards with blank Final URL
 if not blank_final_url_df.empty:
