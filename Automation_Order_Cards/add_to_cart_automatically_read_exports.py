@@ -5,6 +5,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import NoSuchElementException, TimeoutException, ElementClickInterceptedException, ElementNotInteractableException
+from dotenv import load_dotenv
 import time
 
 # Define the directory containing the export files and the reference file
@@ -209,8 +210,17 @@ try:
     login_button = driver.find_element(By.XPATH, '//button[@type="submit"]')
 
     # Enter your credentials
-    username_field.send_keys('maul.happier@gmail.com')
-    password_field.send_keys('Omegaaizabubby1!')
+    load_dotenv()
+
+    username = os.getenv('MY_APP_USERNAME')
+    password = os.getenv('MY_APP_PASSWORD')
+
+    print(f"Username from .env: {username}")
+    print(f"Password from .env: {password}")
+
+    username_field.send_keys(username)
+    password_field.send_keys(password)
+
 
     # Click the login button
     login_button.click()
