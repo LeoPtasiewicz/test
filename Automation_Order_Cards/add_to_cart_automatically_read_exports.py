@@ -209,8 +209,8 @@ try:
     login_button = driver.find_element(By.XPATH, '//button[@type="submit"]')
 
     # Enter your credentials
-    username_field.send_keys('maul.happier@gmail.com')
-    password_field.send_keys('Omegaaizabubby1!')
+    username_field.send_keys('username')
+    password_field.send_keys('password')
 
     # Click the login button
     login_button.click()
