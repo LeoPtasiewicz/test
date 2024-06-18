@@ -210,8 +210,17 @@ try:
     login_button = driver.find_element(By.XPATH, '//button[@type="submit"]')
 
     # Enter your credentials
-    username_field.send_keys('maul.happier@gmail.com')
-    password_field.send_keys('Omegaaizabubby1!')
+    load_dotenv()
+
+    username = os.getenv('MY_APP_USERNAME')
+    password = os.getenv('MY_APP_PASSWORD')
+
+    print(f"Username from .env: {username}")
+    print(f"Password from .env: {password}")
+
+    username_field.send_keys(username)
+    password_field.send_keys(password)
+
 
     # Click the login button
     login_button.click()
