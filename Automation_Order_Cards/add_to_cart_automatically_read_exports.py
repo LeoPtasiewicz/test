@@ -8,9 +8,12 @@ from selenium.common.exceptions import NoSuchElementException, TimeoutException,
 from dotenv import load_dotenv
 import time
 
-# Define the directory containing the export files and the reference file
-export_dir = 'D:/Add to card automatically/test/Automation_Order_Cards/Exports'
-reference_file = 'D:/Add to card automatically/test/Automation_Order_Cards/reference_file.xlsx'
+# Get the directory of the current script
+script_dir = os.path.dirname(os.path.abspath(__file__))
+
+# Define the paths to the export directory and the reference file
+export_dir = os.path.join(script_dir, 'Exports')
+reference_file = os.path.join(script_dir, 'reference_file.xlsx')
 output_file = 'combined_order_details.xlsx'
 aggregated_output_file = 'aggregated_order_details.xlsx'
 
