@@ -29,7 +29,7 @@ python get-pip.py
 Step 3: Run the Setup Script
 To simplify the setup process, run the setup.bat script (for Windows) or setup.sh script (for Unix-based systems). This will create a virtual environment and install the required packages.
 
-For Windows:
+For Windows:s
 In the VSCode terminal, run:
 
 setup.bat
@@ -41,3 +41,5 @@ MY_APP_USERNAME=your_username
 MY_APP_PASSWORD=your_password
 
 
+Run 
+venv\Scripts\activate
