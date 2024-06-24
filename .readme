@@ -1,0 +1,43 @@
+# Add to Cart Automatically
+
+This project automates the process of adding items to the cart based on order details. It uses Selenium to control the web browser and Pandas for data manipulation. The script reads order details from CSV files, processes them, and interacts with the website to add the items to the cart.
+
+## Prerequisites
+
+1. **Python Installation:**
+   Ensure Python is installed on your system. You can download it from [python.org](https://www.python.org/). During installation, make sure to check the box that adds Python to your PATH.
+
+2. **VSCode Installation:**
+   Download and install Visual Studio Code (VSCode) from [code.visualstudio.com](https://code.visualstudio.com/).
+
+## Setup
+
+### Step 1: Clone the Repository
+
+Clone this repository to your local machine. Open VSCode, open a terminal (`View` > `Terminal`), and run:
+
+```sh
+git clone https://github.com/LeoPtasiewicz/test.git
+
+
+Step 2: Install pip (if not already installed)
+If pip (Python's package installer) is not already installed, use the provided get-pip.py file. In the VSCode terminal, run:
+
+python get-pip.py
+
+
+Step 3: Run the Setup Script
+To simplify the setup process, run the setup.bat script (for Windows) or setup.sh script (for Unix-based systems). This will create a virtual environment and install the required packages.
+
+For Windows:
+In the VSCode terminal, run:
+
+setup.bat
+
+Step 4: Create a .env File
+Create a .env file in the root directory of the project to store your environment variables. This file should include your credentials and any other configuration needed by the script. Example:
+
+MY_APP_USERNAME=your_username
+MY_APP_PASSWORD=your_password
+
+
