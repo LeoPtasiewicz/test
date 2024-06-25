@@ -96,97 +96,113 @@ def wait_for_non_empty_text(driver, locator, timeout=10):
         f"Element with locator {locator} did not have non-empty text after {timeout} seconds"
     )
 
-def gather_listings(card_url):
-    driver.get(card_url)
+def gather_listings(card_url, page):
     listings_data = []
+    try:
+        # Get the current URL from the browser's address bar
+        driver.get(card_url)
+        time.sleep(2)  # Wait for the page to load completely
+        current_url = driver.current_url
 
-    while True:
-        try:
-            WebDriverWait(driver, 20).until(
-                EC.presence_of_all_elements_located((By.CSS_SELECTOR, '.listing-item__listing-data'))
-            )
-            listings = driver.find_elements(By.CSS_SELECTOR, '.listing-item__listing-data')
+        # Update the URL with the appropriate page number
+        if '&page=' in current_url:
+            current_url = current_url.replace(f'&page={page-1}', f'&page={page}')
+        else:
+            current_url = f"{current_url}&page={page}"
 
-            for listing in listings:
-                try:
-                    available_quantity_element = listing.find_element(By.CSS_SELECTOR, '.add-to-cart__available')
-                    available_quantity_text = available_quantity_element.text.strip().split()[-1]
-                    available_quantity = int(available_quantity_text)
-                    add_to_cart_button = listing.find_element(By.CSS_SELECTOR, '.add-to-cart__submit')
-                    listings_data.append((add_to_cart_button, available_quantity))
-                except NoSuchElementException:
-                    continue  # If any element is not found, move to the next listing
+        driver.get(current_url)
+        WebDriverWait(driver, 20).until(
+            EC.presence_of_all_elements_located((By.CSS_SELECTOR, '.listing-item__listing-data'))
+        )
+        listings = driver.find_elements(By.CSS_SELECTOR, '.listing-item__listing-data')
 
-            # Check if there are more pages and navigate to the next page if available
-            next_page_buttons = driver.find_elements(By.CSS_SELECTOR, '.pagination__next')
-            if next_page_buttons and next_page_buttons[0].is_enabled():
-                next_page_buttons[0].click()
-                WebDriverWait(driver, 20).until(EC.staleness_of(listings[0]))  # Wait for the listings to refresh
-            else:
-                break  # No more pages
+        for listing in listings:
+            try:
+                available_quantity_element = listing.find_element(By.CSS_SELECTOR, '.add-to-cart__available')
+                available_quantity_text = available_quantity_element.text.strip().split()[-1]
+                available_quantity = int(available_quantity_text)
+                add_to_cart_button = listing.find_element(By.CSS_SELECTOR, '.add-to-cart__submit')
+                listings_data.append((add_to_cart_button, available_quantity))
+            except NoSuchElementException:
+                continue  # If any element is not found, move to the next listing
 
-        except TimeoutException as e:
-            print(f"An error occurred while gathering listings: {e}")
-            break
+    except TimeoutException as e:
+        print(f"An error occurred while gathering listings: {e}")
 
     return listings_data
 
-def add_card_to_cart(listings_data, card_name, card_url, desired_quantity):
+def add_card_to_cart(card_name, card_url, desired_quantity):
     total_added = 0
     order_summary = []
+    current_page = 1
 
-    for index, (add_to_cart_button, available_quantity) in enumerate(listings_data):
-        if total_added >= desired_quantity:
-            break
+    while total_added < desired_quantity:
+        listings_data = gather_listings(card_url, page=current_page)
 
-        while available_quantity > 0 and total_added < desired_quantity:
-            try:
-                WebDriverWait(driver, 20).until(
-                    EC.element_to_be_clickable(add_to_cart_button)
-                )
-                add_to_cart_button.click()
-                time.sleep(2)  # Small delay to ensure the action is processed
+        if not listings_data:
+            break  # No more listings available, stop the loop
+
+        added_in_this_page = 0
+
+        for index, (add_to_cart_button, available_quantity) in enumerate(listings_data):
+            if total_added >= desired_quantity:
+                break
+
+            while available_quantity > 0 and total_added < desired_quantity:
+                try:
+                    WebDriverWait(driver, 20).until(
+                        EC.element_to_be_clickable(add_to_cart_button)
+                    )
+                    add_to_cart_button.click()
+                    time.sleep(2)  # Small delay to ensure the action is processed
+
+                    # Check for popup after attempting to add to cart
+                    if is_popup_present():
+                        print("Popup detected after attempting to add to cart.")
+                        time.sleep(2)  # Wait for 2 seconds
+                        try:
+                            okay_button = driver.find_element(By.CSS_SELECTOR, '.add-item-error__action__primary-btn')
+                            okay_button.click()
+                            time.sleep(1)  # Small delay to ensure the action is processed
+                            print("Clicked 'Okay' button on popup.")
+                            break  # Skip to the next listing
+                        except (NoSuchElementException, TimeoutException) as popup_e:
+                            print(f"Error clicking 'Okay' button: {popup_e}")
+                            break  # Skip to the next listing
+                    else:
+                        total_added += 1
+                        added_in_this_page += 1
+                        available_quantity -= 1
+                        print(f"Added 1 of {card_name} to cart.")
                 
-                # Check for popup after attempting to add to cart
-                if is_popup_present():
-                    print("Popup detected after attempting to add to cart.")
-                    time.sleep(2)  # Wait for 2 seconds
-                    try:
-                        okay_button = driver.find_element(By.CSS_SELECTOR, '.add-item-error__action__primary-btn')
-                        okay_button.click()
-                        time.sleep(1)  # Small delay to ensure the action is processed
-                        print("Clicked 'Okay' button on popup.")
-                        break  # Skip to the next listing
-                    except (NoSuchElementException, TimeoutException) as popup_e:
-                        print(f"Error clicking 'Okay' button: {popup_e}")
-                        break  # Skip to the next listing
-                else:
-                    total_added += 1
-                    available_quantity -= 1
-                    print(f"Added 1 of {card_name} to cart.")
-                
-            except (ElementClickInterceptedException, ElementNotInteractableException) as e:
-                print(f"Error clicking add to cart button: {e}")
-                if is_popup_present():
-                    print("Popup detected while attempting to add to cart.")
-                    time.sleep(2)  # Wait for 2 seconds
-                    try:
-                        okay_button = driver.find_element(By.CSS_SELECTOR, '.add-item-error__action__primary-btn')
-                        okay_button.click()
-                        time.sleep(1)  # Small delay to ensure the action is processed
-                        print("Clicked 'Okay' button on popup.")
-                        break  # Skip to the next listing
-                    except (NoSuchElementException, TimeoutException) as popup_e:
-                        print(f"Error clicking 'Okay' button: {popup_e}")
-                        break  # Skip to the next listing
-                else:
-                    continue
+                except (ElementClickInterceptedException, ElementNotInteractableException) as e:
+                    print(f"Error clicking add to cart button: {e}")
+                    if is_popup_present():
+                        print("Popup detected while attempting to add to cart.")
+                        time.sleep(2)  # Wait for 2 seconds
+                        try:
+                            okay_button = driver.find_element(By.CSS_SELECTOR, '.add-item-error__action__primary-btn')
+                            okay_button.click()
+                            time.sleep(1)  # Small delay to ensure the action is processed
+                            print("Clicked 'Okay' button on popup.")
+                            break  # Skip to the next listing
+                        except (NoSuchElementException, TimeoutException) as popup_e:
+                            print(f"Error clicking 'Okay' button: {popup_e}")
+                            break  # Skip to the next listing
+                    else:
+                        continue
+
+        if added_in_this_page == 0:
+            break  # If no items were added in this page, stop pagination
+
+        current_page += 1
 
     if total_added < desired_quantity:
         print(f"Could not add the desired quantity of {card_name} to the cart. Added {total_added} out of {desired_quantity}.")
     
     order_summary.append((card_name, total_added))
     return order_summary, total_added
+
 
 def is_popup_present():
     try:
@@ -237,16 +253,11 @@ try:
     df = pd.read_excel(aggregated_output_file, engine='openpyxl')
 
     # Iterate through each card URL and add to cart
-    for index, row in df.iterrows():
+    for index, row in df.iterrows():    
         card_url = row['Final URL']
         desired_quantity = row['Quantity']
         try:
-            listings_data = gather_listings(card_url)
-            print(f"Listings for {card_url}:")
-            for btn, qty in listings_data:
-                print(f"Available quantity: {qty}")
-
-            summary, added_quantity = add_card_to_cart(listings_data, card_url.split('/')[-1], card_url, desired_quantity)
+            summary, added_quantity = add_card_to_cart(card_url.split('/')[-1], card_url, desired_quantity)
             order_summary.extend(summary)
             if added_quantity < desired_quantity:
                 unable_to_order.append((card_url, desired_quantity - added_quantity))
@@ -264,6 +275,7 @@ try:
         print("\nUnable to Order:")
         for card_url, quantity in unable_to_order:
             print(f"Unable to order {quantity} of {card_url}")
+
 
 except Exception as e:
     print(f"An error occurred: {e}")
