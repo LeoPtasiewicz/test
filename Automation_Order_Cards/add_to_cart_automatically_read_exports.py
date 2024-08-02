@@ -99,18 +99,16 @@ def wait_for_non_empty_text(driver, locator, timeout=10):
 def gather_listings(card_url, page):
     listings_data = []
     try:
-        # Get the current URL from the browser's address bar
+        # Update the URL with the appropriate page number before navigating
+        if '&page=' in card_url:
+            card_url = card_url.replace(f'&page={page-1}', f'&page={page}')
+        else:
+            card_url = f"{card_url}&page={page}"
+        
+        # Navigate to the updated URL
         driver.get(card_url)
         time.sleep(2)  # Wait for the page to load completely
-        current_url = driver.current_url
 
-        # Update the URL with the appropriate page number
-        if '&page=' in current_url:
-            current_url = current_url.replace(f'&page={page-1}', f'&page={page}')
-        else:
-            current_url = f"{current_url}&page={page}"
-
-        driver.get(current_url)
         WebDriverWait(driver, 20).until(
             EC.presence_of_all_elements_located((By.CSS_SELECTOR, '.listing-item__listing-data'))
         )
@@ -121,7 +119,7 @@ def gather_listings(card_url, page):
                 available_quantity_element = listing.find_element(By.CSS_SELECTOR, '.add-to-cart__available')
                 available_quantity_text = available_quantity_element.text.strip().split()[-1]
                 available_quantity = int(available_quantity_text)
-                add_to_cart_button = listing.find_element(By.CSS_SELECTOR, '.add-to-cart__submit')
+                add_to_cart_button = listing.find_element(By.CSS_SELECTOR, '.add-to-cart__wrapped__submit')
                 listings_data.append((add_to_cart_button, available_quantity))
             except NoSuchElementException:
                 continue  # If any element is not found, move to the next listing
@@ -130,6 +128,7 @@ def gather_listings(card_url, page):
         print(f"An error occurred while gathering listings: {e}")
 
     return listings_data
+
 
 def add_card_to_cart(card_name, card_url, desired_quantity):
     total_added = 0
@@ -150,9 +149,11 @@ def add_card_to_cart(card_name, card_url, desired_quantity):
 
             while available_quantity > 0 and total_added < desired_quantity:
                 try:
+                    time.sleep(1)
                     WebDriverWait(driver, 20).until(
                         EC.element_to_be_clickable(add_to_cart_button)
                     )
+                    
                     add_to_cart_button.click()
                     time.sleep(2)  # Small delay to ensure the action is processed
 
@@ -238,11 +239,16 @@ try:
     print(f"Password from .env: {password}")
 
     username_field.send_keys(username)
+
+    # Adjust time.sleep in order to avoid recaptcha
+    time.sleep(.5)
+    
     password_field.send_keys(password)
 
+    time.sleep(2)
 
-    # Click the login button
-    login_button.click()
+    # # Click the login button
+    # login_button.click()
 
     # Wait for you to log in manually if any additional verification is needed
     print("Please complete any additional verification if prompted. Type 'ok' in the terminal to continue.")
